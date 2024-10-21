@@ -1,0 +1,25 @@
+// validations/validations.js
+const { body, validationResult } = require('express-validator');
+
+const userValidation = () => [
+body('email').isEmail().withMessage('Invalid email'),
+body('name').notEmpty().withMessage('Name is required'),
+body('mobile').isMobilePhone().withMessage('Invalid mobile number')
+];
+
+const expenseValidation = () => [
+body('userId').notEmpty().withMessage('User ID is required'),
+body('amount').isFloat({ gt: 0 }).withMessage('Amount must be greater than zero'),
+body('description').notEmpty().withMessage('Description is required'),
+body('participants').isArray().withMessage('Participants should be an array')
+];
+
+const validate = (req, res, next) => {
+const errors = validationResult(req);
+if (!errors.isEmpty()) {
+return res.status(400).json({ errors: errors.array() });
+}
+next();
+};
+
+module.exports = { userValidation, expenseValidation, validate };

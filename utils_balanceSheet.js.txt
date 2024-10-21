@@ -1,0 +1,21 @@
+// utils/balanceSheet.js
+const generateBalanceSheet = (expenses, userId) => {
+const balance = {};
+
+expenses.forEach(expense => {
+expense.participants.forEach(participant => {
+if (!balance[participant.userId]) {
+balance[participant.userId] = { totalOwed: 0, totalPaid: 0 };
+}
+if (participant.userId.toString() === userId) {
+balance[participant.userId].totalPaid += participant.amountOwed;
+} else {
+balance[participant.userId].totalOwed += participant.amountOwed;
+}
+});
+});
+
+return balance;
+};
+
+module.exports = { generateBalanceSheet };

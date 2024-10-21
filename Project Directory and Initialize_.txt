@@ -1,0 +1,3 @@
+mkdir daily-expenses
+cd daily-expenses
+npm init -y

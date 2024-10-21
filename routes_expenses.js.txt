@@ -1,0 +1,79 @@
+// routes/expenses.js
+const express = require('express');
+const router = express.Router();
+const Expense = require('../models/Expense');
+const User = require('../models/User');
+const { expenseValidation, validate } = require('../validations/validations');
+const { generateBalanceSheet } = require('../utils/balanceSheet');
+
+// Create a new expense
+router.post('/', expenseValidation(), validate, async (req, res) => {
+const { amount, description, participants } = req.body;
+
+const totalPercentage = participants.reduce((total, participant) => total + (participant.percentage || 0), 0);
+const totalExactAmount = participants.reduce((total, participant) => total + (participant.amount || 0), 0);
+
+if (totalPercentage > 100) {
+return res.status(400).send("Total percentage must not exceed 100.");
+}
+
+const expense = new Expense({
+userId: req.body.userId,
+amount,
+description,
+participants: participants.map(participant => {
+if (participant.amount) {
+return { userId: participant.userId, amountOwed: participant.amount };
+} else if (participant.percentage) {
+return { userId: participant.userId, amountOwed: (amount * (participant.percentage / 100)) };
+} else {
+return { userId: participant.userId, amountOwed: (amount / participants.length) };
+}
+})
+});
+
+try {
+await expense.save();
+res.status(201).send(expense);
+} catch (error) {
+res.status(400).send(error);
+}
+});
+
+// Get expenses for a user
+router.get('/:userId', async (req, res) => {
+try {
+const expenses = await Expense.find({ 'participants.userId': req.params.userId }).populate('participants.userId');
+res.send(expenses);
+} catch (error) {
+res.status(500).send(error);
+}
+});
+
+// Get overall expenses
+router.get('/', async (req, res) => {
+try {
+const expenses = await Expense.find().populate('userId').populate('participants.userId');
+res.send(expenses);
+} catch (error) {
+res.status(500).send(error);
+}
+});
+
+// Generate balance sheet
+router.get('/balance-sheet/:userId', async (req, res) => {
+const userId = req.params.userId;
+
+try {
+const expenses = await Expense.find({ 'participants.userId': userId });
+const balanceSheet = generateBalanceSheet(expenses, userId);
+
+// Here you would generate a downloadable file (e.g., PDF)
+// For simplicity, we send back the balance sheet as JSON
+res.send(balanceSheet);
+} catch (error) {
+res.status(500).send(error);
+}
+});
+
+module.exports = router;

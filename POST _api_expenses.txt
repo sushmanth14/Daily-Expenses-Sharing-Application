@@ -1,0 +1,10 @@
+{
+"userId": "user_id_here",
+"amount": 3000,
+"description": "Dinner",
+"participants": [
+{"userId": "user_id_here", "percentage": 50},
+{"userId": "friend1_id", "percentage": 25},
+{"userId": "friend2_id", "percentage": 25}
+]
+}
